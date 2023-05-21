@@ -1,0 +1,195 @@
+---
+title: "F1 Postion Forecast"
+output: html_document
+date: "2023-05-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+###packages
+```{r}
+library(tidyverse)
+
+
+
+
+
+
+
+
+
+
+```
+
+
+### data 
+
+
+````{r}
+
+
+setwd("C:/Users/alext/OneDrive/Documents/f1mod/Data")
+
+
+circuits <- read_csv("circuits.csv")
+
+constures <- read_csv("constructor_results.csv")
+
+construcst <- read_csv("constructor_standings.csv")
+
+constructors <- read_csv("constructors.csv")
+
+dristan <- read_csv("driver_standings.csv")
+
+
+drivers <- read_csv("drivers.csv")
+
+
+laptimes <- read_csv("lap_times.csv")
+
+
+pits <- read_csv("pit_stops.csv")
+
+qual = read_csv("qualifying.csv")
+
+races <- read_csv("races.csv")
+
+results <- read_csv("results.csv")
+
+seasons <- read_csv("seasons.csv")
+
+status <- read_csv("status.csv")
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+```{r}
+
+pos_func = function(x) {
+   
+   
+all_data778 = all_data %>% left_join(min_lap, by = c("raceId", "lap")) %>%
+                               filter(round < x) %>%
+                                  filter(year > 2009) %>%
+                                    mutate(delta = milliseconds/minl-1) %>%
+                                     # filter(year == 2014) %>%
+                                          filter(delta < 2) %>%
+                                filter(delta < 0.1) %>%
+                              group_by(code, driverId, year) %>%
+                                  summarise(meandel = mean(delta)) %>%
+                                    left_join(avpos_dri, by = c("code", "year")) %>%
+                                      mutate(roundav = x) %>%
+                                        select(meandel, meanpos, roundav)
+ 
+  return(all_data778)
+   
+   
+}
+ 
+ 
+rac1 = c(2:19)
+ 
+ 
+pace_mes = map_dfr(rac1, pos_func)
+ 
+pace_mes2 = pace_mes %>% 
+                        ungroup() %>%
+                            group_by(roundav) %>%
+                              nest() %>%
+                                mutate(mod = map(data, ~lm(meandel ~ meanpos, data = .)), 
+                                         quality = map(mod, glance))  %>%
+                                  unnest(quality) %>%
+                                      select(roundav, r.squared) %>%
+                                        mutate(meas = "racepace")
+ 
+ 
+ 
+pos_func2 = function(x){
+ 
+avpos_dri_2 = results %>% left_join(drivers, by = "driverId") %>%
+                                  left_join(constructors, by ="constructorId") %>%
+                                       ungroup() %>%
+                                      left_join(races, by = "raceId")  %>%
+                                         filter(milliseconds != "\\N")  %>%
+                                              filter(year > 2008) %>%
+                                            ungroup() %>%
+                                                filter(round < x) %>%
+                                                  group_by(year, code) %>% 
+                                summarise(meanpos1 = mean(positionOrder, na.rm = T))  %>%
+                                   left_join(avpos_dri, by = c("code", "year")) %>%
+                                                     ungroup() %>%
+                                                    mutate(roundav = x) %>%
+                                                        ungroup() %>%
+                                                          select(roundav, meanpos, meanpos1)
+ 
+return(avpos_dri_2)
+ 
+ 
+} 
+ 
+ 
+ 
+rac = c(2:19)
+ 
+pos_sum = map_dfr(rac, pos_func2)
+ 
+ 
+ 
+ 
+pos_sum2 = pos_sum %>% 
+                        ungroup() %>%
+                            group_by(roundav) %>%
+                              nest() %>%
+                                mutate(mod = map(data, ~lm(meanpos1 ~ meanpos, data = .)), 
+                                         quality = map(mod, glance))  %>%
+                                  unnest(quality) %>%
+                                      select(roundav, r.squared) %>%
+                                          mutate(meas = "position")
+ 
+ 
+ 
+com_sum = pace_mes2 %>%
+                      bind_rows(pos_sum2)
+ 
+ 
+cols = c("position" = "#2f0094", "racepace" = "#ff8519")
+ 
+ggplot(com_sum, aes(x = roundav, y = r.squared, col = meas)) + geom_line(size = 2) +
+                                                  scale_colour_manual(values = cols) +
+                              labs(x = "Race No.", y = "R Squared", 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
