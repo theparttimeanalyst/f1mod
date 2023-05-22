@@ -110,6 +110,13 @@ lapcount <- results %>% group_by(raceId) %>%
 colnames(lapcount)[2] <- "tlap"
 
   
+min_lap = laptimes %>% mutate(seconds = milliseconds / 1000) %>%
+                          group_by(raceId) %>%
+                            slice_min(seconds) %>%
+                              rename(minlap = seconds) %>%
+                                select(raceId, minlap)
+
+
 all_race <- laptimes %>% left_join(races, by = "raceId") %>%
                                 left_join(drivers, by = "driverId") %>%
                         left_join(pits, by = c("raceId", "lap", "driverId")) %>%
