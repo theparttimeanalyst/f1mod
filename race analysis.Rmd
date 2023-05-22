@@ -16,6 +16,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 
 
+library(scales)
+
 ````
 
 
@@ -211,6 +213,40 @@ bah_strat = tibble(code, tyre) %>%
 
 
 
+```{r}
+
+
+
+# Define the data
+code <- c("VER", "PER", "ALO", "RUS", "SAI", "HAM", "LEC", "GAS", "OCO", "MAG", 
+                 "TSU", "STR", "BOT", "ALB", "HUL", "ZHO", "NOR", "DEV", "PIA", "SAR")
+
+start <- c("C2", "C3", "C3", "C2", "C2", "C2", "C3", "C3", "C2", "C3", "C2", "C2", "C3", 
+           "C3", "C2", "C2", "C4", "C3", "C4", "C3")
+
+stint_2 <- c("C3", "C2", "C2", "C3", "C3", "C3", "C2", "C2", "C3", "C2", "C3", "C3", "C2", 
+             "C2", "C3", "C3", "C2", "C2", "C2", "C2")
+
+# Create the data frame
+tyre_strategies <- data.frame(code, start, stint_2)
+
+# Pivot the data frame
+miami_strat <- tyre_strategies %>% 
+  pivot_longer(cols = c(start, stint_2), 
+               names_to = "stin", 
+               values_to = "tyre")  %>%
+                  group_by(code) %>% 
+                  mutate(stint = 1:n()) %>%
+                      select(code, tyre, stint) %>%
+                        mutate(raceId = 1102)
+
+
+
+
+
+
+```
+
 
 
 ````{r}
@@ -229,9 +265,9 @@ colnames(stint_min)[4] = "minl"
 
 stint_min2 = all_race2 %>% left_join(stint_min, by = c("raceId", "code", "stint")) %>%
                                       mutate(delta = lap5/minl-1) %>% 
-                                        filter(year == 2022) %>%
-                                          filter(round == 1) %>%
-                                              left_join(bah_strat, by = c("code", "stint")) %>%
+                                        filter(year == 2023) %>%
+                                          filter(round == 5) %>%
+                                              left_join(miami_strat, by = c("code", "stint")) %>%
                                                   group_by(code, stint) %>%
                                                       mutate(stintl = 1:n()) %>% 
                                                                   filter(stintl > 1)
@@ -344,7 +380,7 @@ ggsave("pacerank.png", last_plot())
 
 
 
-fast_lap_all = all_race2 %>%  filter(year == 2022)  %>% 
+fast_lap_all = all_race2 %>%  filter(year == 2023)  %>% 
                                 group_by(raceId, lap) %>% 
                                     slice_min(lap5) %>% 
                                       select(raceId, lap, lap5)
@@ -353,7 +389,7 @@ fast_lap_all = all_race2 %>%  filter(year == 2022)  %>%
 colnames(fast_lap_all)[3] = "flap"
 
 
-fast_lap_all2 = all_race2 %>% filter(year == 2022)  %>% 
+fast_lap_all2 = all_race2 %>% filter(year == 2023)  %>% 
                                       left_join(fast_lap_all, by = c("raceId", "lap")) %>% 
                                         mutate(perdiff = lap5/flap -1 ) %>% 
                                           left_join(teamdri, by = "code") %>% 
@@ -386,6 +422,41 @@ ggplot(fast_lap_all2, aes(x = round, y = perdiffm, col = teams)) + geom_point(si
 
 ```
 
+
+```{r}
+
+
+
+
+fast_lap_bench = all_race2 %>%  filter(year == 2022)  %>% 
+                                group_by(raceId, lap) %>% 
+                                    slice_min(lap5) %>% 
+                                      select(raceId, lap, lap5) %>%
+                                    left_join(races, by = "raceId") %>%
+                                            ungroup() %>%
+                                          select(name, lap, lap5) %>%
+                                          rename(flap = lap5)
+
+
+
+fast_lap_all2 = all_race2 %>% filter(year == 2023)  %>% 
+                            left_join(fast_lap_bench, by = c("name", "lap")) %>% 
+                                        mutate(perdiff = lap5/flap -1 ) %>% 
+                                          left_join(teamdri, by = "code") %>% 
+                                              group_by(raceId, teams, lap) %>% 
+                                                slice_min(perdiff) %>% 
+                                                    ungroup() %>% 
+                                                        group_by(round, teams) %>% 
+                                   summarise(perdiffm =median(perdiff, na.rm = T))
+  
+
+
+ggplot(fast_lap_all2, aes(x = round, y = perdiffm, col = teams)) + geom_point()
+
+
+
+
+```
 
 
 
@@ -669,6 +740,13 @@ ggplot(ham, aes(x = lap, y = seconds, col = as.factor(stint))) + geom_point()
 
 
 `````
+
+
+
+
+
+
+
 
 ```{R}
 
