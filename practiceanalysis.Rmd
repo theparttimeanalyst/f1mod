@@ -81,7 +81,20 @@ practice_dat = fp1_sum %>%
 
 
 clean_dat = practice_dat %>%
-                      mutate(lap5 = LapTime *24 *60*60)
+                      mutate(lap5 = LapTime *24 *60*60) 
+
+
+
+stintal = clean_dat %>% filter(!is.na(PitOutTime)) %>%
+                              group_by(DriverNumber) %>%
+                                arrange(LapStartDate) %>%
+                                mutate(stint2 = 1:n()) %>%
+                                select(DriverNumber, PitOutTime, stint2)
+
+
+clean_dat2 = clean_dat %>% left_join(stintal, by = c("DriverNumber", "PitOutTime")) %>%
+                                  fill(stint2)
+                      
 
 
 
