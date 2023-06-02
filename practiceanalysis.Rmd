@@ -46,5 +46,34 @@ fp2 = list.files()
 fp2_sum = map_dfr(fp2, fp2_dat)
 
 
+setwd("C:/Users/alext/OneDrive/Documents/data/f1/2023/fp1")
+
+
+
+
+fp1_dat = function(x){
+  
+  dat = read_xlsx(x)
+  
+  dat2 = dat %>% mutate(race = x) %>%
+                  mutate(seassion = "fp1")
+  
+}
+
+
+
+fp1 = list.files()
+
+
+
+fp1_sum = map_dfr(fp1, fp1_dat)
+
+practice_dat = fp1_sum %>% 
+                          bind_rows(fp2_sum)
 
 ```
+
+
+
+
+```{r}
