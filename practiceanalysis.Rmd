@@ -1,0 +1,50 @@
+---
+title: "Practice Analysis"
+output: html_document
+date: "2023-06-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+
+
+library(tidyverse)
+
+library(readxl)
+
+
+```
+
+##data
+
+```{r}
+
+setwd("C:/Users/alext/OneDrive/Documents/data/f1/2023/fp2")
+
+
+
+
+fp2_dat = function(x){
+  
+  dat = read_xlsx(x)
+  
+  dat2 = dat %>% mutate(race = x) %>%
+                  mutate(seassion = "fp2")
+  
+}
+
+
+
+fp2 = list.files()
+
+
+
+fp2_sum = map_dfr(fp2, fp2_dat)
+
+
+
+```
