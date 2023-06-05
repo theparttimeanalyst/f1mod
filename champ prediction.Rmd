@@ -19,6 +19,16 @@ library(tidyverse)
 
 
 
+library(tidyverse)
+
+library(readxl)
+
+
+library(scales)
+
+
+
+
 
 
 
@@ -76,7 +86,54 @@ status <- read_csv("status.csv")
 
 ```
 
+```{r}
 
+
+### linking the drivers to the contructors 
+
+driver_constru = results %>% left_join(drivers, by = "driverId") %>%
+                                  left_join(constructors, by ="constructorId") %>%
+                                      left_join(races, by = "raceId") %>% 
+                                          select(raceId, driverId, constructorId, code, constructorRef, year, round)
+                                            
+
+#### joining the driver data to teams
+
+all_data = laptimes %>% left_join(driver_constru, by = c("raceId", "driverId")) 
+
+### calculating the fastest lap
+
+min_lap = all_data %>% group_by(raceId, lap) %>%
+                          slice_min(milliseconds) %>%
+                            rename(minl = milliseconds) %>%
+                                select(raceId, lap, minl)
+
+
+#### caclulating the difference to the fastest 
+all_data2 = all_data %>% left_join(min_lap, by = c("raceId", "lap")) %>%
+                                 filter(round == 2) %>%
+                                  filter(year > 2009) %>%
+                                    mutate(delta = milliseconds/minl-1) %>%
+                                        filter(delta < 0.1) %>%
+                                        group_by(constructorRef, year, lap) %>%
+                                      
+                                          slice_min(delta) %>%
+                      
+                                            ungroup() %>%
+                                                group_by(constructorRef, year) %>%
+                                                  summarise(meandel = mean(delta))
+
+
+
+
+
+
+
+
+
+
+
+````
 
 ```{r}
 
@@ -193,3 +250,141 @@ ggplot(com_sum, aes(x = roundav, y = r.squared, col = meas)) + geom_line(size = 
 
 
 ```
+
+
+
+```{r}
+
+
+
+
+
+set.seed(13) # set seed for reproducibility
+ 
+n <- 23000 # number of draws
+mu <- 7 # mean
+sigma <- 3.33 # standard deviation
+ 
+# generate n random draws from normal distribution
+samples <- rnorm(n, mean = mu, sd = sigma)
+sample2 = rpois(n, lambda = mu)
+ 
+ 
+ 
+samp = tibble(samples)
+samp2 = tibble(sample2) 
+ 
+ 
+ 
+norm = samp %>% mutate(result = round(samples, 0)) %>%
+                    group_by(result) %>%
+                        summarise(n = n() ) %>%
+                            mutate(prob = n/23000) %>%
+                                mutate(dist = "norm")
+ 
+ 
+pois = samp2 %>% mutate(result = if_else(sample2 == 0, 1, as.double(sample2))) %>%
+                               group_by(result) %>%
+                        summarise(n = n() ) %>%
+                            mutate(prob = n/23000) %>%
+                                mutate(dist = "pois")
+ 
+ 
+ 
+dist_comp = norm %>% bind_rows(pois)
+ 
+ 
+ 
+ 
+ave_pos_num2 = avpos_dri %>% mutate(roundpos = round(meanpos, 0))
+ 
+ 
+ 
+ 
+pos_dri = results %>% left_join(drivers, by = "driverId") %>%
+                                  left_join(constructors, by ="constructorId") %>%
+                                      left_join(races, by = "raceId")  %>%
+                                         filter(milliseconds != "\\N")  %>%
+                                            ungroup() %>%
+                                   left_join(ave_pos_num2, by = c("year", "code")) %>%
+                                                  filter(roundpos == 7) %>%
+                                                      group_by(positionOrder) %>%
+                                                          summarise(n = n()) %>%
+                                                            mutate(prob = n/449) %>%
+                                                    rename(result = positionOrder) %>%
+                                                          mutate(dist = "act")
+ 
+ 
+ 
+ 
+ 
+dist_comp2 = dist_comp %>% bind_rows(pos_dri)
+ 
+ 
+ 
+ 
+cols = c("pois" = "#ff8519", "norm" = "#2f0094", "act" = "#009c39")
+ 
+ 
+ggplot(dist_comp2, aes(x = result, y = prob, col = dist))+ geom_line(size = 1.5) +
+                                                          scale_color_manual(values = cols) +
+                              labs(x = "Finishing Position", y = "probaility of Finishing", title = "Probability Distributions Compared to Actual") +
+                                    guides(colour = guide_legend(title = "Distribution")) +
+                                  theme(panel.background = element_blank())
+
+
+
+
+
+
+````
+
+
+
+
+```{r}
+
+
+dat_create <- function(x) {
+  position <- pce23_2 %>% filter(driverId == x)
+  mu <- position[[5]]
+  sample2 <- rpois(10000000, lambda = mu)
+  samp2 <- tibble(sample2)
+   
+  samp_ver <- samp2 %>%
+    mutate(sample3 = if_else(sample2 == 0, 1, as.double(sample2))) %>%
+    group_by(sample3) %>%
+    summarise(n = n()) %>%
+    uncount(n) %>%
+    mutate(driverId = x)
+   
+  return(samp_ver)
+}
+ 
+driver <- c(1,4,807,815,822,825,830,832,839,840,842,844,846,847,848,852,855,856,857,858)
+dri_23 <- map_dfr(driver, dat_create)
+ 
+# Create a function to sample positions and rename columns
+sample_and_rename <- function(data, position) {
+  data %>% filter(sample3 == position) %>%
+    sample_n(size = 100000) %>%
+    select(driverId) %>%
+    rename(!!paste0("pos_", position) := driverId)
+}
+ 
+# Loop through positions and bind columns
+all_pos <- tibble()
+for (i in 1:10) {
+  all_pos <- all_pos %>% bind_cols(sample_and_rename(dri_23, i))
+}
+
+
+
+
+
+
+
+
+
+
+````
