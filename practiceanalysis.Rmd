@@ -108,9 +108,8 @@ clean_dat2 = clean_dat %>% left_join(stintal, by = c("DriverNumber", "PitOutTime
                                           mutate(stintlap = 1:n()) %>%
                                             bind_cols(min_lap) %>%
                                               mutate(delta = lap5/minl) %>%
-                                                mutate(fpen = stintlap *0.06) %>%
                 left_join(stint_tot, by = c("race", "seassion", "Stint", "Driver")) %>%
-                                                    mutate(lap_fadj = lap5 - ((tot-stintlap)*fpen))
+                                                    mutate(lap_fadj = lap5 - ((tot-stintlap)*0.06))
                                                   
                       
 
