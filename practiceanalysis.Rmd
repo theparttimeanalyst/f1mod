@@ -92,8 +92,18 @@ stintal = clean_dat %>% filter(!is.na(PitOutTime)) %>%
                                 select(DriverNumber, PitOutTime, stint2)
 
 
+min_lap = clean_dat %>% slice_min(lap5) %>%
+                              rename(minl = lap5) %>%
+                                  select(minl)
+
+
 clean_dat2 = clean_dat %>% left_join(stintal, by = c("DriverNumber", "PitOutTime")) %>%
-                                  fill(stint2)
+                                  fill(stint2) %>%
+                                    ungroup() %>%
+                                      group_by(DriverNumber, stint2) %>%
+                                          mutate(stintlap = 1:n()) %>%
+                                            bind_cols(min_lap) %>%
+                                              mutate(delta = lap5/minl)
                       
 
 
@@ -107,3 +117,76 @@ clean_dat2 = clean_dat %>% left_join(stintal, by = c("DriverNumber", "PitOutTime
 
 
 ```
+
+
+
+```{r}
+
+prac_dat = clean_dat2 %>%
+                        filter(race == "cagpfp223.xlsx") %>%
+                            filter(delta < 1.2)
+ 
+
+
+
+
+
+ggplot(prac_dat, aes(x = delta)) + geom_histogram()
+
+ggplot(prac_dat, aes(x = LapNumber, y = lap5)) + geom_point()
+
+
+
+```
+
+
+
+```{r}
+
+
+ggplot(prac_dat, aes(x = stintlap, y = lap5)) + geom_point() + facet_wrap(~Compound)
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+prac_dat2 = clean_dat2 %>%
+                        filter(race == "cagpfp223.xlsx") %>%
+                            filter(!is.na(lap5)) %>%
+                            mutate(vallap = if_else(delta < 1.2, 1,0))  %>%
+                              group_by(Driver, stint2) %>%
+                                  summarise(toval = sum(vallap), n = n()) %>%
+                                    mutate(per = toval/n)
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
