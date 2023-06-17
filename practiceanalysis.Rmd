@@ -198,3 +198,46 @@ ggplot(prac_dat3, aes(x = stintlap, y = lap5)) + geom_point() + facet_wrap(~Comp
 
 
 
+```{r}
+
+
+
+
+medium_tyre = prac_dat3 %>%
+                        filter(Compound == "MEDIUM")
+
+
+
+ggplot(medium_tyre, aes(x = stintlap, y = lap5)) + geom_point() 
+
+
+
+
+
+
+
+
+```
+
+
+
+
+```{r}
+
+
+
+
+tyre_model <- function(df) {
+  lm(lap5 ~ stintlap, data = df)
+}
+
+
+med_tyre_sum = medium_tyre %>% group_by(Driver, stint2) %>%
+                                        nest() %>%
+                                          mutate(mods = map(data, tyre_model))    
+
+
+
+
+
+```
