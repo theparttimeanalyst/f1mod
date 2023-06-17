@@ -172,11 +172,19 @@ prac_dat2 = clean_dat2 %>%
 
 
 
+
+prac_dat3 = clean_dat2 %>% 
+                        left_join(prac_dat2, by = c("Driver", "stint2")) %>%
+                            filter(per > 0.75) %>%
+                              filter(n > 5)
  
 
 
 
 
+
+
+ggplot(prac_dat3, aes(x = stintlap, y = lap5)) + geom_point() + facet_wrap(~Compound)
 
 
 
