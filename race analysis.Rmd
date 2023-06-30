@@ -238,6 +238,39 @@ bah_strat = bahrain_gp_2023 %>%   pivot_longer(cols = 3:8,
 
 
 
+data <- read.table(text = "
+ALO,C4,C3
+RUS,C4,C2
+HAM,C2,C4
+SAI,C4,C2
+LEC,C1,C2
+OCO,C4,C2
+GAS,C4,C2
+MAG,C4,C2
+TSU,C4,C2
+HUL,C4,C2
+ZHO,C4,C2,C4
+DEV,C4,C2
+PIA,C4,C2
+SAR,C2,C4
+NOR,C1,C2,C4
+BOT,C4,C2,C4,C1
+ALB,C4,C2
+STR,C4,C3
+", sep = ",", header = FALSE, fill = TRUE, col.names = c("Driver", "Stint 1", "Stint 2", "Stint 3", "Stint 4"))
+
+
+
+
+saud_strat = data %>%   pivot_longer(cols = 2:5, 
+               names_to = "stin", 
+               values_to = "tyre")  %>%
+                  group_by(Driver) %>% 
+                  mutate(stint = 1:n()) %>%
+                      select(Driver, tyre, stint) %>%
+                        rename(code = Driver) %>%
+                        mutate(raceId = 1099) %>%
+                            filter(tyre != "")
 
 
 
@@ -286,7 +319,8 @@ miami_strat <- tyre_strategies %>%
 
 
 strat_sum = bah_strat %>%
-                        bind_rows(miami_strat)
+                        bind_rows(miami_strat) %>%
+                        bind_rows(saud_strat)
 
 
 
