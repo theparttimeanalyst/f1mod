@@ -211,6 +211,39 @@ bah_strat = tibble(code, tyre) %>%
 
 ```
 
+```{r}
+
+bahrain_gp_2023 <- data.frame(
+  Driver = c("VER", "PER", "ALO", "SAI", "HAM", "STR", "RUS", "BOT", "GAS", "ALB", "TSU", "SAR", "MAG", "DEV", "HUL", "ZHOU", "NOR", "OCO", "LEC", "PIA"),
+  Team = c("Red Bull", "Red Bull", "Aston Martin", "Ferrari", "Mercedes", "Aston Martin", "Mercedes", "Alfa Romeo", "Alpine", "Williams", "AlphaTauri", "Williams", "Haas", "AlphaTauri", "Haas", "Alfa Romeo", "McLaren", "Alpine", "Ferrari", "McLaren"),
+  Start = c("C4", "C4", "C4", "C4", "C4", "C4", "C4", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C4", "C3", "C3", "C4", "C3", "C3"),
+  Stint_2 = c("C4", "C4", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", NA),
+  Stint_3 = c("C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C4", "C4", "C3", "C3", NA),
+  Stint_4 = c(NA, NA, NA, NA, NA, NA, NA, NA, "C3", "C4", "C4", "C3", "C3", NA, "C4", "C4", "C4", NA, NA, NA),
+  Stint_5 = c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, "C3", NA, NA, NA),
+  Stint_6 = c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, "C4", NA, NA, NA)
+)
+
+
+
+
+bah_strat = bahrain_gp_2023 %>%   pivot_longer(cols = 3:8, 
+               names_to = "stin", 
+               values_to = "tyre")  %>%
+                  group_by(Driver) %>% 
+                  mutate(stint = 1:n()) %>%
+                      select(Driver, tyre, stint) %>%
+                        rename(code = Driver) %>%
+                        mutate(raceId = 1098)
+
+
+
+
+
+
+```
+
+
 
 
 ```{r}
@@ -249,9 +282,101 @@ miami_strat <- tyre_strategies %>%
 
 
 
+```{r}
+
+
+strat_sum = bah_strat %>%
+                        bind_rows(miami_strat)
+
+
+
+
+
+
+
+```
+
+
+
+
+
+```{r}
+
+
+# Install and load the necessary package
+if (!require("dplyr")) install.packages("dplyr")
+library(dplyr)
+
+# Map full driver names to their respective 3-letter codes
+driver_codes <- c("Verstappen" = "VER", "Hamilton" = "HAM", "Russell" = "RUS", 
+                  "Perez" = "PER", "Sainz" = "SAI", "Stroll" = "STR", "Alonso" = "ALO", 
+                  "Ocon" = "OCO", "Zhou" = "ZHO", "Gasly" = "GAS", "Leclerc" = "LEC", 
+                  "Tsunoda" = "TSU", "Piastri" = "PIA", "de Vries" = "DEV", 
+                  "Hulkenberg" = "HUL", "Albon" = "ALB", "Norris" = "NOR", 
+                  "Magnussen" = "MAG", "Bottas" = "BOT", "Sargeant" = "SAR")
+
+# Create the dataframe
+tyre_strategy <- data.frame(
+  driver_code = driver_codes[c("Verstappen", "Hamilton", "Russell", "Perez", 
+                               "Sainz", "Stroll", "Alonso", "Ocon", "Zhou", 
+                               "Gasly", "Leclerc", "Tsunoda", "Piastri", 
+                               "de Vries", "Hulkenberg", "Albon", "Norris", 
+                               "Magnussen", "Bottas", "Sargeant")],
+  team = c("Red Bull", "Mercedes", "Mercedes", "Red Bull", "Ferrari", 
+           "Aston Martin", "Aston Martin", "Alpine", "Alfa Romeo", "Alpine", 
+           "Ferrari", "AlphaTauri", "McLaren", "AlphaTauri", "Haas", "Williams", 
+           "McLaren", "Haas", "Alfa Romeo", "Williams"),
+  start_tyre = c("NM", "US", "NS", "NM", "US", "US", "US", "US", "NS", 
+                 "US", "NH", "NS", "US", "NS", "US", "NS", "US", "NS", "NS", "NM"),
+  stint_2_tyre = c("NH", "NM", "NM", "NH", "NM", "US", "US", "NM", "NH", 
+                   "NM", "NS", "NH", "NH", "NH", "NM", "NH", "NH", "NM", "NH", "NH"),
+  stint_3_tyre = c("US", "US", "US", "NS", "NH", "UH", "UH", "NH", "NH", 
+                   "NH", "NS", "NM", "NM", "NM", "NH", "NM", "NM", "NH", "NH", "NH"),
+  stint_4_tyre = c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 
+                   NA, "NM", NA, "US", "NM", NA, NA),
+  stringsAsFactors = FALSE
+)
+
+# Print the dataframeI apologize for the confusion. As an AI model developed by OpenAI, I do not currently have the capability to interact with the web browser and extract information from web pages in real-time. However, I can guide you on how to create a data frame in R using the information provided.
+```
+
+
+```{r}
+# Load the necessary library
+library(tibble)
+
+# Create a tibble (a modern form of data frame)
+spain_strategy <- tibble(
+  Driver = c("VER", "HAM", "RUS", "PER", "SAI", "STR", "ALO", "OCO", "ZHO", "GAS", "LEC", "TSU", "PIA", "DEV", "HUL", "ALB", "NOR", "MAG", "BOT", "SAR"),
+  Team = c("Red Bull", "Mercedes", "Mercedes", "Red Bull", "Ferrari", "Aston Martin", "Aston Martin", "Alpine", "Alfa Romeo", "Alpine", "Ferrari", "AlphaTauri", "McLaren", "AlphaTauri", "Haas", "Williams", "McLaren", "Haas", "Alfa Romeo", "Williams"),
+  Start_Tyre = c("C3", "C5", "C4", "C3", "C5", "C5", "C5", "C5", "C4", "C5", "C2", "C4", "C5", "C4", "C5", "C4", "C5", "C4", "C4", "C3"),
+  Stint_2_Tyre = c("C2", "C3", "C3", "C2", "C3", "C5", "C5", "C3", "C2", "C3", "C4", "C2", "C2", "C2", "C3", "C2", "C2", "C3", "C2", "C2"),
+  Stint_3_Tyre = c("C5", "C5", "C5", "C4", "C2", "C1", "C1", "C2", "C2", "C2", "C4", "C3", "C3", "C3", "C2", "C3", "C3", "C2", "C2", "C2"),
+  Stint_4_Tyre = c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, "C3", NA, "C5", "C3", NA, NA)
+)
+
+# Print the tibble
+print(tyre_strategy)
+
+
+
+
+
+
+
+
+
+````
+
+
+
 ````{r}
 
 
+
+
+spain_strat2 = spain_strategy %>% 
+                    
 
 
 stint_min = all_race2 %>% group_by(raceId, code, stint) %>%
@@ -266,7 +391,7 @@ colnames(stint_min)[4] = "minl"
 stint_min2 = all_race2 %>% left_join(stint_min, by = c("raceId", "code", "stint")) %>%
                                       mutate(delta = lap5/minl-1) %>% 
                                         filter(year == 2023) %>%
-                                          filter(round == 5) %>%
+                                          filter(round == 7) %>%
                                               left_join(miami_strat, by = c("code", "stint")) %>%
                                                   group_by(code, stint) %>%
                                                       mutate(stintl = 1:n()) %>% 
