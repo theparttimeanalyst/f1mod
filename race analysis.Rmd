@@ -309,14 +309,14 @@ all_race2 = all_race %>% left_join(all_race_ms, by = c("lap", "code", "stint")) 
                                     mutate(valfil = seconds - min_lap1) %>%
    select(raceId, driverId, lap, position, seconds, year, name, round, code, stint, lap5) %>%
     left_join(strat_sum, by = c("code", "stint", "raceId")) %>%
-                                    group_by(code, stint) %>%
+                                    group_by(raceId, code, stint) %>%
                                       mutate(sitntl = 1:n()) %>%
                                           ungroup()
 
 
 
-min_stint = all_race2 %>% group_by(code, stint) %>%
-                            slice_min(lap5) %>%
+min_stint = all_race2 %>% group_by(raceId, code, stint) %>%
+                            slice_min(lap5, with_ties = F) %>%
                               rename(minla = lap5) %>%
                                     ungroup() %>%
                                   select(raceId, driverId, stint, minla)
@@ -325,7 +325,7 @@ min_stint = all_race2 %>% group_by(code, stint) %>%
 
 
 min_lap4 = all_race2 %>% group_by(raceId, lap) %>%
-                            slice_min(lap5) %>%
+                            slice_min(lap5, with_ties = F) %>%
                                 rename(flap = lap5) %>%
                                     ungroup() %>%
                                   select(raceId, lap, flap)
@@ -348,6 +348,25 @@ all_rac3 = all_race2 %>%
 
 
 ````
+
+
+
+```{r}
+
+
+test = min_lap4 %>% group_by(raceId, lap) %>%
+                          summarise(n = n()) %>%
+                            filter(n > 1)
+
+
+
+
+
+
+
+
+
+```
 
 
 
