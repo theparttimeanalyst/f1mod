@@ -314,13 +314,78 @@ miami_strat <- tyre_strategies %>%
 ```
 
 
+```{r}
+
+data <- tribble(
+  ~Driver, ~Team, ~Start, ~`Stint 2`, ~`Stint 3`, ~`Stint 4`, ~`Stint 5`, ~`Stint 6`,
+  "PER", "Red Bull", "C3", "C3", "C5", "C1", "C1",
+  "NOR", "McLaren", "C4", "C3", "C1", "C2",
+  "HUL", "Haas", "C4", "C3", "C2", "C2",
+  "PIA", "McLaren", "C4", "C3", "C3", "C1", "C1",
+  "ZHOU", "Alfa Romeo", "C1", "C3", "C3", "C1",
+  "TSU", "AlphaTauri", "C4", "C3", "C3", "C2", "C2",
+  "BOT", "Alfa Romeo", "C1", "C3", "C1",
+  "SAI", "Ferrari", "C5", "C3", "C2", "C2",
+  "GAS", "Alpine", "C1", "C3", "C2",
+  "OCO", "Alpine", "C1", "C3", "C1",
+  "DEV", "AlphaTauri", "C3", "C4", "C1", "C2",
+  "SAR", "Williams", "C3", "C5", "C5", "C4", "C5", "C1",
+  "MAG", "Haas", "C4", "C3",
+  "RUS", "Mercedes", "C4", "C3",
+  "ALB", "Williams", "C4",
+  "LEC", "Ferrari", "C4"
+)
+
+
+
+
+
+
+
+```
+
+```{r}
+
+
+austria_gp_2023 <- data.frame(
+  Driver = c("VER", "LEC", "PER", "SAI", "NOR", "ALO", "HAM", "RUS", "GAS", "STR", "ALB", "OCO", "SAR", "ZHO", "DEV", "BOT", "PIA", "TSU", "MAG", "HUL"),
+  
+  Start = c("C4", "C4", "C4", "C4", "C4", "C3", "C4", "C4", "C4", "C4", "C4", "C4", "C4", "C4", "C4", "C3", "C4", "C4", "C3", "C4"),
+  Stint_2 = c("C3", "C4", "C4", "C4", "C4", "C3", "C4", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C4", "C3", "C3", "C4", "C3"),
+  Stint_3 = c("C4", "C3", "C3", "C3", "C3", "C4", "C4", "C4", "C4", "C3", "C3", "C3", "C3", "C3", "C4", "C3", "C3", "C3", "C3", NA),
+  Stint_4 = c("C5", NA, NA, NA, NA, NA, NA, NA, NA, "C4", NA, NA, NA, NA, NA, NA, "C4", "C4", "C3", NA)
+)
+
+
+
+
+au_strat = austria_gp_2023 %>%   pivot_longer(cols = 2:5, 
+               names_to = "stin", 
+               values_to = "tyre")  %>%
+                  group_by(Driver) %>% 
+                  mutate(stint = 1:n()+1) %>%
+                      select(Driver, tyre, stint) %>%
+                        rename(code = Driver) %>%
+                        mutate(raceId = 1107)
+
+
+
+
+
+
+
+
+
+
+```
 
 ```{r}
 
 
 strat_sum = bah_strat %>%
                         bind_rows(miami_strat) %>%
-                        bind_rows(saud_strat)
+                        bind_rows(saud_strat) %>%
+                          bind_rows(au_strat)
 
 
 
@@ -402,6 +467,30 @@ print(tyre_strategy)
 
 ````
 
+
+```{r}
+
+
+
+all_race_strat = all_race2 %>% left_join(strat_sum, by = c("code", "stint", "raceId")) %>%
+                                    group_by(code, stint) %>%
+                                      mutate(sitntl = 1:n()) %>%
+                                          ungroup()
+
+
+
+stint_min = all_race_strat %>% 
+
+
+
+
+
+
+
+
+
+
+```
 
 
 ````{r}
