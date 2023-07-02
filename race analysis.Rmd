@@ -307,11 +307,34 @@ all_race2 = all_race %>% left_join(all_race_ms, by = c("lap", "code", "stint")) 
                                filter(is.na(lugdur)) %>% 
                                   mutate(perdiff = lap5/min_lap1-1)  %>%
                                     mutate(valfil = seconds - min_lap1) %>%
-                                        select(raceId, driverId, lap, position, seconds, year, name, round, code, stint, lap5)
+   select(raceId, driverId, lap, position, seconds, year, name, round, code, stint, lap5) %>%
+    left_join(strat_sum, by = c("code", "stint", "raceId")) %>%
+                                    group_by(code, stint) %>%
+                                      mutate(sitntl = 1:n()) %>%
+                                          ungroup()
+
+
+
+min_stint = all_race2 %>% group_by(code, stint) %>%
+                            slice_min(lap5) %>%
+                              rename(minla = lap5) %>%
+                                    ungroup() %>%
+                                  select(raceId, driverId, stint, minla)
 
 
 
 
+min_lap4 = all_race2 %>% group_by(raceId, lap) %>%
+                            slice_min(lap5) %>%
+                                rename(flap = lap5) %>%
+                                    ungroup() %>%
+                                  select(raceId, lap, flap)
+
+
+
+all_rac3 = all_race2 %>%
+                        left_join(min_stint, by = c("raceId", "driverId", "stint")) %>%
+                          left_join(min_lap4, by = c("raceId", "lap"))
 
 
 
