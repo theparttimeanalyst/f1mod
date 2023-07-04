@@ -169,7 +169,7 @@ austria_gp_2023 <- data.frame(
   Driver = c("VER", "LEC", "PER", "SAI", "NOR", "ALO", "HAM", "RUS", "GAS", "STR", "ALB", "OCO", "SAR", "ZHO", "DEV", "BOT", "PIA", "TSU", "MAG", "HUL"),
   
   Start = c("C4", "C4", "C4", "C4", "C4", "C3", "C4", "C4", "C4", "C4", "C4", "C4", "C4", "C4", "C4", "C3", "C4", "C4", "C3", "C4"),
-  Stint_2 = c("C3", "C4", "C4", "C4", "C4", "C3", "C4", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C4", "C3", "C3", "C4", "C3"),
+  Stint_2 = c("C3", "C4", "C4", "C4", "C3", "C4", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C3", "C4", "C3", "C3", "C4", "C3"),
   Stint_3 = c("C4", "C3", "C3", "C3", "C3", "C4", "C4", "C4", "C4", "C3", "C3", "C3", "C3", "C3", "C4", "C3", "C3", "C3", "C3", NA),
   Stint_4 = c("C5", NA, NA, NA, NA, NA, NA, NA, NA, "C4", NA, NA, NA, NA, NA, NA, "C4", "C4", "C3", NA)
 )
@@ -341,13 +341,89 @@ all_rac3 = all_race2 %>%
 
 
 
-
+dri_team = results %>% select(raceId, driverId, constructorId) %>%
+                          left_join(races, by = "raceId") %>%
+                    left_join(drivers, by = "driverId") %>%
+                      left_join(constructors, by = "constructorId") %>%
+                            select(year, code, name.y) %>%
+                                distinct()
 
 
 
 
 
 ````
+
+```{r}
+
+
+
+race_sum = all_rac3 %>%
+                        filter(raceId == 1107) %>%
+                            mutate(perloss = lap5/minla-1) %>%
+                                filter(tyre != "C5")
+
+
+
+
+ggplot(race_sum, aes(x = sitntl, y = perloss, col = tyre)) + geom_point() + # + facet_wrap(~tyre)
+                                                                geom_smooth(se = F)
+
+
+
+
+
+
+
+```
+
+
+```{r}
+
+
+
+
+verstapp = all_rac3 %>% filter(code == "NOR") %>%
+                              filter(raceId == 1107) %>%
+                               #   filter(tyre == "C4") %>%
+                                          mutate(perloss = lap5/minla-1) 
+
+
+
+
+ggplot(verstapp, aes(x = sitntl, y = lap5, col = as.factor(stint))) + geom_point()
+
+
+
+```
+
+```{R}
+
+
+
+RACES_2022 = all_rac3 %>% filter(year == 2022) %>%
+                                  group_by(round, name) %>%
+                                    slice_min(lap5, with_ties = F) %>%
+                                      rename(prevf = lap5) %>%
+                                        select(name, prevf)
+ 
+
+
+pace_comp = all_rac3 %>% filter(year == 2022) %>%
+                    left_join(RACES_2022, by = "Name") %>%
+                                left_join(dri_team, by = "code")
+
+
+
+
+
+
+
+
+
+
+
+```
 
 
 
@@ -368,32 +444,6 @@ test = min_lap4 %>% group_by(raceId, lap) %>%
 
 ```
 
-
-
-
-```{r}
-
-
-
-all_race_strat = all_race2 %>% left_join(strat_sum, by = c("code", "stint", "raceId")) %>%
-                                    group_by(code, stint) %>%
-                                      mutate(sitntl = 1:n()) %>%
-                                          ungroup()
-
-
-
-stint_min = all_race_strat %>% 
-
-
-
-
-
-
-
-
-
-
-```
 
 
 ````{r}
