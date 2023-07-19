@@ -491,24 +491,34 @@ ggplot(seascomp, aes(x = delt22, y = delt23)) + geom_point() + geom_smooth(metho
 
 ```{r}
 
+season23 = races %>% filter(year == 2023)
+
 
 #season_mod = function()
 
 
 teammod = seascomp %>% filter(name.y == "Red Bull")
 
+prev_sea = seas22 %>% filter(name.y == "Red Bull")
 
 
 seas_lm = lm(delt23 ~ delt22, teammod)
 
 
-
-summary(seas_lm)
-
+preds = predict(seas_lm, prev_sea, interval = "predict")
 
 
+prev_sea_pred = prev_sea %>% bind_cols(preds) %>%
+                                  left_join(seas23, by = c("name.y", "name")) %>%
+                                    mutate(delta = if_else(is.na(delt23), fit, delt23))
 
 
+prev_sea_pred2 = season23 %>% left_join(prev_sea_pred, by = "name") %>%
+                                    mutate(sourn = if_else(is.na(delt23), "pred", "act")) %>%
+                                      select(round, name, delta, sourn) 
+                                
+
+ggplot(prev_sea_pred2, aes(x = round, y = delta, fill = sourn)) + geom_col()
 
 
 
