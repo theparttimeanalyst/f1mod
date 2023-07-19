@@ -189,6 +189,25 @@ au_strat = austria_gp_2023 %>%   pivot_longer(cols = 2:5,
 
 
 
+brit_gp_2023 <- data.frame(
+Driver = c("VER","NOR", "HAM","PIA","RUS","PER","ALO","ALB","LEC","SAI","SAR","BOT","HUL","STR","ZHO","TSU","DEV", "GAS", "MAG", "OCO"),
+  
+  Start = c("C2", "C2", "C2", "C2", "C3", "C2", "C2", "C2", "C2", "C2", "C2", "C1", "C1", "C2", "C2", "C3", "C3", "C2", "C2", "C3"),
+Stint_2 = c("C3", "C1", "C3", "C1", "C2", "C3", "C3", "C3", "C1", "C1", "C3", "C3", "C2", "C3", "C1", "C1", "C2", "C3", "C4", "C3"),
+Stint_3 = c(NA, NA, NA, NA, NA, NA, NA, NA, "C2", NA, NA, NA, "C3", NA, "C3", "C3", "C3", NA, NA, NA)
+)
+
+
+
+
+gb_strat = brit_gp_2023 %>%   pivot_longer(cols = 2:4, 
+               names_to = "stin", 
+               values_to = "tyre")  %>%
+                  group_by(Driver) %>% 
+                  mutate(stint = 1:n()+1) %>%
+                      select(Driver, tyre, stint) %>%
+                        rename(code = Driver) %>%
+                        mutate(raceId = 1108)
 
 
 
@@ -200,7 +219,8 @@ au_strat = austria_gp_2023 %>%   pivot_longer(cols = 2:5,
 strat_sum = bah_strat %>%
                         bind_rows(miami_strat) %>%
                         bind_rows(saud_strat) %>%
-                          bind_rows(au_strat)
+                          bind_rows(au_strat) %>%
+                            bind_rows(gb_strat)
 
 
 
@@ -409,14 +429,20 @@ RACES_2022 = all_rac3 %>% filter(year == 2022) %>%
  
 
 
-pace_comp = all_rac3 %>% filter(year == 2022) %>%
-                    left_join(RACES_2022, by = "Name") %>%
-                                left_join(dri_team, by = "code")
+pace_comp = all_rac3 %>% filter(year == 2023) %>%
+                    left_join(RACES_2022, by = "name") %>%
+                                left_join(dri_team, by = c("code", "year")) %>%
+                                    filter(round.x != 7) %>%
+                                  mutate(per = lap5/prevf-1) %>%
+                                    group_by(name.y, round.x) %>%
+                                      summarise(meanper = mean(per))
 
 
 
 
 
+
+ggplot(pace_comp, aes(x = round.x, y = meanper, col = name.y)) + geom_smooth(method = "lm", se = F)
 
 
 
@@ -425,6 +451,59 @@ pace_comp = all_rac3 %>% filter(year == 2022) %>%
 
 ```
 
+
+
+```{R}
+
+
+
+test_au = pace_comp %>% filter(raceId == 1107) %>%
+                              group_by(lap) %>%
+                                slice_min(lap5) %>%
+                                    select(lap, lap5, prevf) %>%
+                                       pivot_longer(cols = 2:3, names_to = "year", values_to = "laptime")
+
+
+
+ggplot(test_au, aes(x = lap, y = laptime, col = year)) + geom_point()
+
+
+
+```
+```{r}
+
+
+
+aus = laptimes %>% filter(raceId == 1107) %>%
+                            left_join(races, by = "raceId") %>%
+                                left_join(drivers, by = "driverId") %>%
+                        left_join(pits, by = c("raceId", "lap", "driverId")) %>%
+                            left_join(lapcount, by = "raceId") %>%
+                               mutate(seconds = milliseconds.x / 1000) %>%
+                                  group_by(lap) %>%
+                                    slice_min(seconds)
+
+
+ggplot(aus, aes(x = lap, y = seconds)) + geom_point()
+
+
+
+aus2 = laptimes %>% filter(raceId == 1095) %>%
+                            left_join(races, by = "raceId") %>%
+                                left_join(drivers, by = "driverId") %>%
+                        left_join(pits, by = c("raceId", "lap", "driverId")) %>%
+                            left_join(lapcount, by = "raceId") %>%
+                               mutate(seconds = milliseconds.x / 1000) %>%
+                                  mutate(laprem = tlap-lap) %>%
+                                    mutate(fuelimp = 0.06 *laprem) %>%
+                                      mutate(fuelcorlap = seconds-fuelimp) %>%
+                                          filter(fuelcorlap < 80)
+
+
+ggplot(aus2, aes(x = lap, y = fuelcorlap)) + geom_point()
+
+
+```
 
 
 ```{r}
