@@ -492,6 +492,35 @@ ggplot(seascomp, aes(x = delt22, y = delt23)) + geom_point() + geom_smooth(metho
 ```{r}
 
 
+#season_mod = function()
+
+
+teammod = seascomp %>% filter(name.y == "Red Bull")
+
+
+
+seas_lm = lm(delt23 ~ delt22, teammod)
+
+
+
+summary(seas_lm)
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r}
+
+
 
 
 
