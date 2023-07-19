@@ -379,7 +379,7 @@ dri_team = results %>% select(raceId, driverId, constructorId) %>%
 
 
 race_sum = all_rac3 %>%
-                        filter(raceId == 1107) %>%
+                        filter(raceId == 1108) %>%
                             mutate(perloss = lap5/minla-1) %>%
                                 filter(tyre != "C5")
 
@@ -404,7 +404,7 @@ ggplot(race_sum, aes(x = sitntl, y = perloss, col = tyre)) + geom_point() + # + 
 
 
 verstapp = all_rac3 %>% filter(code == "NOR") %>%
-                              filter(raceId == 1107) %>%
+                              filter(raceId == 1108) %>%
                                #   filter(tyre == "C4") %>%
                                           mutate(perloss = lap5/minla-1) 
 
@@ -453,11 +453,63 @@ ggplot(pace_comp, aes(x = round.x, y = meanper, col = name.y)) + geom_smooth(met
 
 
 
+
+
+````{r}
+
+
+
+seas23 = all_rac3 %>% left_join(dri_team, by = c("code", "year")) %>%
+                              mutate(lapdelt = lap5/flap-1) %>%
+                                filter(year == 2023) %>%
+                                  group_by(name, raceId, name.y) %>%
+                                      summarise(meanper = mean(lapdelt)) %>%
+                                            rename(delt23 = meanper)
+
+
+
+
+seas22 = all_rac3 %>% left_join(dri_team, by = c("code", "year")) %>%
+                              mutate(lapdelt = lap5/flap-1) %>%
+                                filter(year == 2022) %>%
+                                  group_by(name, raceId, name.y) %>%
+                                      summarise(meanper = mean(lapdelt)) %>%
+                                            rename(delt22 = meanper)
+
+
+
+
+seascomp = seas23 %>% left_join(seas22, by = c("name.y", "name"))
+
+
+
+ggplot(seascomp, aes(x = delt22, y = delt23)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(~name.y, scales = "free")
+
+
+```
+
+
+```{r}
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
 ```{R}
 
 
 
-test_au = pace_comp %>% filter(raceId == 1107) %>%
+test_au = pace_comp %>% filter(raceId == 1108) %>%
                               group_by(lap) %>%
                                 slice_min(lap5) %>%
                                     select(lap, lap5, prevf) %>%
