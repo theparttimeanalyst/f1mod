@@ -472,6 +472,9 @@ seas23 = all_rac3 %>% left_join(dri_team, by = c("code", "year")) %>%
 seas22 = all_rac3 %>% left_join(dri_team, by = c("code", "year")) %>%
                               mutate(lapdelt = lap5/flap-1) %>%
                                 filter(year == 2022) %>%
+                       mutate(nam2 = if_else(name == "Brazillian Grand Prix", "São Paulo Grand Prix", name)) %>%
+                                  select(-name) %>%
+                                    rename(name = nam2) %>%
                                   group_by(name, raceId, name.y) %>%
                                       summarise(meanper = mean(lapdelt)) %>%
                                             rename(delt22 = meanper)
