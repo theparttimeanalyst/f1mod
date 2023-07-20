@@ -494,12 +494,12 @@ ggplot(seascomp, aes(x = delt22, y = delt23)) + geom_point() + geom_smooth(metho
 season23 = races %>% filter(year == 2023)
 
 
-#season_mod = function()
+season_mod = function(x) {
 
 
-teammod = seascomp %>% filter(name.y == "Red Bull")
+teammod = seascomp %>% filter(name.y == x)
 
-prev_sea = seas22 %>% filter(name.y == "Red Bull")
+prev_sea = seas22 %>% filter(name.y == x)
 
 
 seas_lm = lm(delt23 ~ delt22, teammod)
@@ -515,14 +515,20 @@ prev_sea_pred = prev_sea %>% bind_cols(preds) %>%
 
 prev_sea_pred2 = season23 %>% left_join(prev_sea_pred, by = "name") %>%
                                     mutate(sourn = if_else(is.na(delt23), "pred", "act")) %>%
-                                      select(round, name, delta, sourn) 
+                                      select(round, name, delta, sourn) %>%
+                                      mutate(team = x)
+
+return(prev_sea_pred2)
                                 
 
-ggplot(prev_sea_pred2, aes(x = round, y = delta, fill = sourn)) + geom_col()
+}
+
+
+teams = c("Alfa Romeo", "AlphaTauri", "Alpine F1 Team", "Aston Martin", "Ferrari", "Haas F1 Team", "McLaren", "Mercedes", "Red Bull", "Williams")
 
 
 
-
+all_team_pred = map_dfr(teams, season_mod)
 
 
 ```
