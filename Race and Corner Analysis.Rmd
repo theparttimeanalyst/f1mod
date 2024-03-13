@@ -1,0 +1,708 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+
+library(tidyverse)
+
+library(f1dataR)
+
+library(readxl)
+
+library(tidymodels)
+
+```
+
+
+```{r}
+
+
+setwd("C:/Users/alext/OneDrive/Documents/f1mod/Data/testing")
+
+testd1 = read_xlsx("test241.xlsx")
+
+testd2 = read_xlsx("test242.xlsx")
+
+testd3 = read_xlsx("test243.xlsx")
+
+
+```
+
+```{r}
+
+testdays = testd1 %>% bind_rows(testd2) %>%
+                          bind_rows(testd3)
+
+
+
+```
+
+
+```{r}
+
+pit_find = testdays %>% mutate(id = 1:n()) %>%
+                        # filter(!is.na(LapTime)) %>%
+                      select(Driver, id, day, Stint, PitOutTime, PitInTime) %>%
+                            fill(PitInTime, .direction = "down") %>%
+                                filter(!is.na(PitOutTime)) %>%
+                                    mutate(pit_delt = (PitOutTime - PitInTime) * 86400) %>%
+                                mutate(pitstop = if_else(pit_delt < 0, 0,
+                                                         if_else(pit_delt < 61, 1,0)))  %>%
+                                  mutate(stintfil = if_else(Stint == 1, 1, 
+                                                            if_else(pitstop == 0, 1,0),0)) %>%
+                                    filter(stintfil == 1) %>%
+                                      group_by(Driver) %>%
+                                        mutate(fuel_group = 1:n()) %>%
+                                          select(Driver, id, day, Stint, fuel_group)
+
+
+
+```
+
+
+```{r}
+
+
+
+
+
+
+test_clean = testdays %>%   mutate(id = 1:n()) %>%
+                         mutate(lap = LapTime * 86400) %>%
+                          mutate(delta = lap/88-1) %>%
+                          mutate(vallap = if_else(delta < 0.2, 1,0))  %>%
+                            left_join(pit_find, by = c("Driver","day", "Stint", "id")) %>%
+                               fill(fuel_group , .direction = "down")
+                            
+
+
+ totlap = test_clean %>% group_by(Driver, day, fuel_group) %>%
+                                    summarise(n = n()) 
+                                      
+ 
+ 
+ 
+ test_clean2 = test_clean %>% filter(!is.na(lap)) %>%
+                               left_join(totlap, by = c("Driver","day", "fuel_group")) %>%
+                                    group_by(Driver, fuel_group) %>%
+                                      mutate(lapno = 1:n()) %>%
+                                        mutate(fuelcor = (n - lapno) *0.06) %>%
+                                          mutate(lapcor = lap - fuelcor)
+                              
+
+
+
+
+```
+
+
+```{r}
+
+
+
+ggplot(test_clean, aes(x = pitdelt)) + geom_density() 
+
+
+
+```
+
+
+```{r}
+
+
+ggplot(testd1, aes(x = LapStartTime, y = LapTime)) + geom_point()
+
+
+
+
+
+
+```
+
+
+
+
+```{r}
+
+
+
+best_lap = test_clean2 %>% ungroup() %>%
+                        group_by(Driver, day) %>% 
+                            slice_min(lapcor)
+
+
+ggplot(best_lap, aes(x = reorder(Driver,lapcor), y = lapcor)) + geom_point(size = 3)
+
+```
+
+
+
+```{r}
+
+
+
+
+min_stint = test_clean2 %>% group_by(Driver, Stint, day) %>%
+                              slice_min(lapcor) %>%
+                                select(Driver, Stint, day, lapcor) %>%
+                                  rename(min_lap = lapcor)
+
+
+
+
+stint_times = test_clean2 %>% filter(vallap == 1) %>%
+                           left_join(min_stint, by = c("Driver", "Stint", "day")) %>%
+                                  mutate(deg_loss = lapcor - min_lap) %>%
+                                    filter(n > 4)
+
+
+
+
+ggplot(stint_times, aes(x = TyreLife, y = deg_loss)) + geom_point() + facet_wrap(~Compound)
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+med_ty = stint_times %>%
+                        filter(Compound == "MEDIUM") %>%
+                          group_by(Driver, day, Stint) %>%
+                            mutate(laglap = lag(lapcor)) %>%
+                              mutate(lapdelt = lapcor/laglap-1) %>%
+                          filter(lapdelt <0.003) 
+
+
+
+
+
+ggplot(med_ty, aes(x = TyreLife, y = deg_loss, col = Stint)) + geom_point() + facet_wrap(~Driver)
+
+
+
+
+
+```
+
+
+
+
+
+
+```{r}
+
+
+
+
+stint_los = med_ty %>% ungroup() %>%
+                          group_by(Driver, day, Stint) %>%
+                            mutate(laglap = lag(lapcor)) %>%
+                              mutate(lapdelt = lapcor/laglap-1) %>%
+                          filter(lapdelt <0.005) %>%
+                            mutate(stintl = 1:n()) %>%
+                              filter(stintl > 4) %>%
+                             slice_max(stintl)  %>%
+                              mutate(degrat = deg_loss/lapno) %>%
+                                    select(Driver, day, Stint, degrat)
+
+
+md_tyr = med_ty %>% group_by(Driver, day, Stint) %>%
+                          group_by(Driver, day, Stint) %>%
+                            mutate(laglap = lag(lapcor)) %>%
+                              mutate(lapdelt = lapcor/laglap-1) %>%
+                          filter(lapdelt <0.005) %>%
+                          slice_min(lapcor) %>%
+                            left_join(stint_los, by = c("Driver", "day", "Stint")) %>%
+                                filter(!is.na(degrat))
+
+
+Driver = c("VER", "PER", "HAM", "RUS", "LEC", "SAI", "NOR", "PIA", "ALO", "STR", "GAS", "OCO", "BOT", "ZHO", "ALB", "SAR", "HUL", "MAG" )
+
+team = c("Red Bull","Red Bull", "Mercedes", "Mercedes", "Ferrari", "Ferrari", "Mclaren", "Mclaren", "Aston Martin", "Aston Martin", "Alpine", "Alpine", "Stake", "Stake", "Williams", "Williams", "Haas", "Haas" )
+
+
+driteam = tibble(team, Driver)
+
+md_tyr2 = md_tyr %>% left_join(driteam, by = "Driver")
+
+
+ggplot(md_tyr2, aes(x = degrat, y = lapcor, col = Team)) + geom_point() + geom_smooth(se = F, method = "lm") + facet_wrap(~Team)
+
+
+
+
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+stint_sum = test_clean2 %>% ungroup() %>%
+                          group_by(Driver, day, Stint) %>%
+                            mutate(laglap = lag(lapcor)) %>%
+                              mutate(lapdelt = lapcor/laglap-1) %>%
+                          filter(lapdelt <0.005) %>%
+                            filter(day == 1) %>%
+                            filter(Driver == "GAS") %>%
+                              filter(Stint == 14) 
+
+
+
+ggplot(stint_sum, aes(x = lapno, y = lapcor)) + geom_point()
+
+
+
+
+
+
+
+
+````
+
+
+
+```{r}
+
+
+stint_lap =   med_ty %>% ungroup() %>%
+                   select(Driver, day, Stint, Team, lapno, lapcor) %>%
+                    group_by(Driver, day, Stint) %>%
+                        summarise(n =n())
+
+
+med_nest = med_ty %>% ungroup() %>%
+                   select(Driver, day, Stint, lapno, lapcor) %>%
+                        group_by(Driver, day, Stint) %>%
+                     nest() %>%
+                     left_join(stint_lap, by = c("Driver", "day", "Stint")) %>%
+                        filter(n > 4)
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+
+nest_func = function(x) {
+
+med_nest2 = med_ty %>% ungroup() %>%
+                   select(Driver, day, Stint, Team, TyreLife, lapcor) %>%
+                        group_by(Driver, day, Stint, Team) %>%
+                          filter(Driver %in% c(x)) %>%
+                              nest()
+return(med_nest2)
+
+}
+
+
+
+
+Driver = c("MAG", "HUL","VER", "PER", "HAM", "RUS", "LEC", "SAI", "NOR", "PIA", "ALO", "STR", "GAS", "OCO", "BOT", "ZHO", "ALB", "SAR", "RIC", "TSU")
+
+nest_dat = map_dfr(Driver, nest_func)
+
+nest_dat2 = nest_dat %>%
+                     left_join(stint_lap, by = c("Driver", "day", "Stint")) %>%
+                        filter(n > 4)
+
+```
+
+
+
+```{r}
+
+
+
+deg_mod = function(df){
+  lm(lapcor ~ TyreLife, data = df)
+}
+
+
+nest_dat3 <- nest_dat2 %>% 
+  mutate(model = map(data, deg_mod)) %>%
+             mutate(resids = map2(data, model, add_residuals)) %>%
+           mutate(glance = map(model, broom::glance)) %>% 
+  unnest(glance) %>%
+            rowwise() %>%
+  mutate(
+    intercept = list(coef(model)[1]),
+    slope = list(coef(model)[2])
+  ) %>%
+  unnest(cols = c(intercept, slope))
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+
+ggplot(nest_dat3, aes(x = slope, y = intercept, col = Team)) + geom_point() + geom_smooth(se = F, method = "lm") 
+
+
+
+
+
+
+
+
+```
+
+
+
+```{R}
+
+ggplot(nest_dat3, aes(x = Team, y = slope,col = intercept)) + geom_jitter(jitter = 0.2)
+
+
+
+
+```
+
+
+
+
+```{R}
+
+
+
+nest_dat4 = nest_dat3 %>% select(Driver, Team, intercept, slope)
+
+
+
+perf_mod = lm(intercept~slope+Team, nest_dat4)
+
+
+team_dat = nest_dat3 %>% group_by(Team) %>%
+                          slice_max(intercept) %>%
+                            select(Team) %>%
+                                mutate(slope = 0.2)
+
+
+preds= predict(perf_mod, team_dat)
+
+preds2 = predict(perf_mod, team_dat, interval = "prediction")
+
+
+team_dat2 = team_dat %>% bind_cols(preds) %>%
+                            bind_cols(preds2) %>%
+                            filter(Team != "Williams")
+
+
+
+
+
+
+
+
+```
+
+
+```{r}
+reticulate::py_install('fastf1')
+
+
+
+```
+
+
+```{r}
+
+setup_fastf1()
+
+
+
+
+
+```
+
+```{r}
+
+load_laps(season = "current", round = "last")
+
+
+
+
+
+
+```
+
+
+```{r}
+
+
+bah_gp_race = load_session_laps(season = 2024, round = 1, session = "R", add_weather = FALSE)
+
+
+
+bah_gp_race23 = load_session_laps(season = 2023, round = 1, session = "R", add_weather = FALSE)
+
+bah_gp_race22 = load_session_laps(season = 2022, round = 1, session = "R", add_weather = FALSE)
+
+
+
+
+
+
+```
+
+
+```{r}
+
+
+
+bahrain_gp_race2 = bah_gp_race  %>% 
+                                mutate(fuel_cor = 0.06 * (57 - lap_number)) %>%
+                                mutate(lap_cor = lap_time - fuel_cor)
+
+
+
+ggplot(bahrain_gp_race2, aes(x = tyre_life, y = lap_cor, col = compound)) + geom_point() 
+
+
+
+
+
+
+
+````
+
+
+```{r}
+
+
+bestlap = bahrain_gp_race2 %>% slice_min(lap_time) %>%
+                                    select(lap_cor) %>%
+                                      rename(best_lap2 = lap_cor)
+
+bet_car = bahrain_gp_race2 %>% bind_cols(bestlap) %>%
+                                  mutate(delta = lap_cor/best_lap2 - 1) %>%
+                                    filter(delta < 0.1) %>%
+                                      filter(is.na(pit_in_time)) %>%
+                                      filter(position == 1) %>%
+                                      select(lap_number, lap_cor) %>%
+                                        rename(best_lap_car = lap_cor)
+
+
+
+ bahrain_gp_race3 =  bahrain_gp_race2 %>% left_join(bet_car, by = "lap_number") %>%
+                                              bind_cols(bestlap) %>%
+                                  mutate(delta = lap_cor/best_lap2 - 1) %>%
+                                    filter(delta < 0.1) %>%
+                                      filter(is.na(pit_in_time))  %>%
+                                              mutate(lap_delt = lap_cor - best_lap_car) %>%
+                                                group_by(driver) %>%
+                                                  summarise(mean_del = mean(lap_delt, na.rm = T))
+ 
+ 
+ 
+ 
+ ggplot(bahrain_gp_race3, aes(x  = reorder(driver, mean_del), y = mean_del)) + geom_col()
+
+
+
+
+```
+
+
+
+
+```{r}
+
+
+
+per24 = load_driver_telemetry(season = 2024, round = 1, driver = "PER", session = "Q")
+ver24 = load_driver_telemetry(season = 2024, round = 1, driver = "VER", session = "Q")
+nor24 = load_driver_telemetry(season = 2024, round = 1, driver = "NOR", session = "Q")
+rus24 = load_driver_telemetry(season = 2024, round = 1, driver = "RUS", session = "Q")
+lec24 = load_driver_telemetry(season = 2024, round = 1, driver = "LEC", session = "Q")
+
+
+
+
+
+
+
+````
+
+
+```{r}
+
+
+per24 = load_driver_telemetry(season = 2024, round = 2, driver = "PER", session = "Q")
+
+
+
+
+
+
+
+
+```
+
+```{r}
+
+
+per24_cor = per24 %>% mutate(brakel = lag(brake)) %>%
+                            mutate(cors = if_else(brakel == FALSE, 
+                                                  if_else(brake == TRUE, "CORST", "NOT"), "NOT"))
+
+
+
+```
+
+
+```{r}
+
+setwd("C:/Users/alext/OneDrive/Documents/f1mod/Data")
+
+circuit_break = read_xlsx("circuitbreak.xlsx")
+
+
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+
+per_cor3 = per24 %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(tot_time = sum(delta), apex_sp = mean(Aprex)) %>%
+                                  mutate(driver = "Perez")
+
+per_cor4 =  ver24 %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(fast_time = sum(delta)) 
+
+per_cor5 =  nor24 %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(tot_time = sum(delta), apex_sp = mean(Aprex)) %>%
+                                  mutate(driver = "Norris")
+
+
+
+per_cor6 =  rus24 %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(tot_time = sum(delta),apex_sp = mean(Aprex)) %>%
+                                  mutate(driver = "Russell")
+
+
+
+per_cor7 =  lec24 %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(tot_time = sum(delta),apex_sp = mean(Aprex)) %>%
+                                  mutate(driver = "Leclerc")
+
+
+
+
+cor_sum = per_cor3 %>%
+                      bind_rows(per_cor5) %>%
+                      bind_rows(per_cor6) %>%
+                      bind_rows(per_cor7) %>%
+                        left_join(per_cor4, by = "Status") %>%
+                          mutate(per_delt = tot_time/fast_time-1) %>%
+                      filter(!is.na(Status)) %>%
+                        filter(Status != "Straight")
+
+
+
+
+
+ggplot(cor_sum, aes(x = apex_sp, y = per_delt, col = driver)) + geom_point() + geom_smooth(method = "lm")
+
+ggplot(cor_sum, aes(x = reorder(Status,apex_sp), y = per_delt, fill = driver)) + geom_col() + facet_wrap(~driver)
+
+```
+
+
+```{r}
+
+
+
+
+sau_gp_fp2 = load_session_laps(season = 2024, round = 2, session = "FP2", add_weather = FALSE)
+
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+per_saud = load_driver_telemetry(season = 2024, round = 2, driver = "PER", session = "Q")
+ver_saud = load_driver_telemetry(season = 2024, round = 2, driver = "VER", session = "Q")
+lec_saud = load_driver_telemetry(season = 2024, round = 2, driver = "LEC", session = "Q")
+rus_saud = load_driver_telemetry(season = 2024, round = 2, driver = "RUS", session = "Q")
+ham_saud = load_driver_telemetry(season = 2024, round = 2, driver = "HAM", session = "Q")
+nor_saud = load_driver_telemetry(season = 2024, round = 2, driver = "NOR", session = "Q")
+pia_saud = load_driver_telemetry(season = 2024, round = 2, driver = "PIA", session = "Q")
+alo_saud = load_driver_telemetry(season = 2024, round = 2, driver = "ALO", session = "Q")
+
+
+
+
+
+
+
+
+```
