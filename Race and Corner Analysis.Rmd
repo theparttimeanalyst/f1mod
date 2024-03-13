@@ -3,8 +3,6 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-
-
 ```{r}
 
 library(tidyverse)
@@ -16,7 +14,6 @@ library(readxl)
 library(tidymodels)
 
 ```
-
 
 ```{r}
 
@@ -41,7 +38,6 @@ testdays = testd1 %>% bind_rows(testd2) %>%
 
 ```
 
-
 ```{r}
 
 pit_find = testdays %>% mutate(id = 1:n()) %>%
@@ -62,7 +58,6 @@ pit_find = testdays %>% mutate(id = 1:n()) %>%
 
 
 ```
-
 
 ```{r}
 
@@ -99,7 +94,6 @@ test_clean = testdays %>%   mutate(id = 1:n()) %>%
 
 ```
 
-
 ```{r}
 
 
@@ -109,7 +103,6 @@ ggplot(test_clean, aes(x = pitdelt)) + geom_density()
 
 
 ```
-
 
 ```{r}
 
@@ -123,9 +116,6 @@ ggplot(testd1, aes(x = LapStartTime, y = LapTime)) + geom_point()
 
 ```
 
-
-
-
 ```{r}
 
 
@@ -138,8 +128,6 @@ best_lap = test_clean2 %>% ungroup() %>%
 ggplot(best_lap, aes(x = reorder(Driver,lapcor), y = lapcor)) + geom_point(size = 3)
 
 ```
-
-
 
 ```{r}
 
@@ -170,8 +158,6 @@ ggplot(stint_times, aes(x = TyreLife, y = deg_loss)) + geom_point() + facet_wrap
 
 ```
 
-
-
 ```{r}
 
 
@@ -194,11 +180,6 @@ ggplot(med_ty, aes(x = TyreLife, y = deg_loss, col = Stint)) + geom_point() + fa
 
 
 ```
-
-
-
-
-
 
 ```{r}
 
@@ -249,8 +230,6 @@ ggplot(md_tyr2, aes(x = degrat, y = lapcor, col = Team)) + geom_point() + geom_s
 
 ```
 
-
-
 ```{r}
 
 
@@ -275,11 +254,9 @@ ggplot(stint_sum, aes(x = lapno, y = lapcor)) + geom_point()
 
 
 
-````
 
 
 
-```{r}
 
 
 stint_lap =   med_ty %>% ungroup() %>%
@@ -300,8 +277,6 @@ med_nest = med_ty %>% ungroup() %>%
 
 
 ```
-
-
 
 ```{r}
 
@@ -332,8 +307,6 @@ nest_dat2 = nest_dat %>%
 
 ```
 
-
-
 ```{r}
 
 
@@ -360,8 +333,6 @@ nest_dat3 <- nest_dat2 %>%
 
 ```
 
-
-
 ```{r}
 
 
@@ -378,8 +349,6 @@ ggplot(nest_dat3, aes(x = slope, y = intercept, col = Team)) + geom_point() + ge
 
 ```
 
-
-
 ```{R}
 
 ggplot(nest_dat3, aes(x = Team, y = slope,col = intercept)) + geom_jitter(jitter = 0.2)
@@ -388,9 +357,6 @@ ggplot(nest_dat3, aes(x = Team, y = slope,col = intercept)) + geom_jitter(jitter
 
 
 ```
-
-
-
 
 ```{R}
 
@@ -427,14 +393,12 @@ team_dat2 = team_dat %>% bind_cols(preds) %>%
 
 ```
 
-
 ```{r}
 reticulate::py_install('fastf1')
 
 
 
 ```
-
 
 ```{r}
 
@@ -457,7 +421,6 @@ load_laps(season = "current", round = "last")
 
 ```
 
-
 ```{r}
 
 
@@ -475,7 +438,6 @@ bah_gp_race22 = load_session_laps(season = 2022, round = 1, session = "R", add_w
 
 
 ```
-
 
 ```{r}
 
@@ -495,10 +457,8 @@ ggplot(bahrain_gp_race2, aes(x = tyre_life, y = lap_cor, col = compound)) + geom
 
 
 
-````
 
 
-```{r}
 
 
 bestlap = bahrain_gp_race2 %>% slice_min(lap_time) %>%
@@ -534,9 +494,6 @@ bet_car = bahrain_gp_race2 %>% bind_cols(bestlap) %>%
 
 ```
 
-
-
-
 ```{r}
 
 
@@ -553,10 +510,8 @@ lec24 = load_driver_telemetry(season = 2024, round = 1, driver = "LEC", session 
 
 
 
-````
 
 
-```{r}
 
 
 per24 = load_driver_telemetry(season = 2024, round = 2, driver = "PER", session = "Q")
@@ -581,7 +536,6 @@ per24_cor = per24 %>% mutate(brakel = lag(brake)) %>%
 
 ```
 
-
 ```{r}
 
 setwd("C:/Users/alext/OneDrive/Documents/f1mod/Data")
@@ -595,8 +549,6 @@ circuit_break = read_xlsx("circuitbreak.xlsx")
 
 
 ```
-
-
 
 ```{r}
 
@@ -668,7 +620,6 @@ ggplot(cor_sum, aes(x = reorder(Status,apex_sp), y = per_delt, fill = driver)) +
 
 ```
 
-
 ```{r}
 
 
@@ -683,8 +634,6 @@ sau_gp_fp2 = load_session_laps(season = 2024, round = 2, session = "FP2", add_we
 
 ```
 
-
-
 ```{r}
 
 
@@ -698,6 +647,92 @@ nor_saud = load_driver_telemetry(season = 2024, round = 2, driver = "NOR", sessi
 pia_saud = load_driver_telemetry(season = 2024, round = 2, driver = "PIA", session = "Q")
 alo_saud = load_driver_telemetry(season = 2024, round = 2, driver = "ALO", session = "Q")
 
+
+
+
+
+
+
+
+```
+
+```{r}
+
+
+jed = circuit_break %>% filter(Circuit == "Jeddah")
+
+
+
+corner_perf = function()
+
+
+```
+
+```{r}
+
+
+per_cor3 = per_saud %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(tot_time = sum(delta), apex_sp = mean(Aprex)) %>%
+                                  mutate(driver = "Perez")
+
+per_cor4 =  ver24 %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(fast_time = sum(delta)) 
+
+per_cor5 =  nor24 %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(tot_time = sum(delta), apex_sp = mean(Aprex)) %>%
+                                  mutate(driver = "Norris")
+
+
+
+per_cor6 =  rus24 %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(tot_time = sum(delta),apex_sp = mean(Aprex)) %>%
+                                  mutate(driver = "Russell")
+
+
+
+per_cor7 =  lec24 %>% mutate(Meter = round(distance,0)) %>%
+                            left_join(circuit_break, by = "Meter") %>%
+                              mutate(time2 = lag(time)) %>%
+                              mutate(delta = time- time2) %>%
+                              group_by(Status) %>%
+                                summarise(tot_time = sum(delta),apex_sp = mean(Aprex)) %>%
+                                  mutate(driver = "Leclerc")
+
+
+
+
+cor_sum = per_cor3 %>%
+                      bind_rows(per_cor5) %>%
+                      bind_rows(per_cor6) %>%
+                      bind_rows(per_cor7) %>%
+                        left_join(per_cor4, by = "Status") %>%
+                          mutate(per_delt = tot_time/fast_time-1) %>%
+                      filter(!is.na(Status)) %>%
+                        filter(Status != "Straight")
+
+
+
+
+
+ggplot(cor_sum, aes(x = apex_sp, y = per_delt, col = driver)) + geom_point() + geom_smooth(method = "lm")
+
+ggplot(cor_sum, aes(x = reorder(Status,apex_sp), y = per_delt, fill = driver)) + geom_col() + facet_wrap(~driver)
 
 
 
